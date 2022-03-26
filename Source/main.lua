@@ -5,13 +5,16 @@ import "CoreLibs/timer"
 import 'CoreLibs/frameTimer'
 import 'CoreLibs/easing'
 import 'player'
+import 'enemy'
+import 'bombup'
+import 'bombdown'
+import 'bunker'
+import 'explosion'
 
 local player = Player()
-
 local gfx <const> = playdate.graphics
 local score = 0
 local changeDirection = nil
-local playerSprite = nil
 local playerSpeed = 4
 local enemySpeed = 0.1
 local enemyDirection = 'right'
@@ -20,42 +23,29 @@ local isFiring = false
 local remainingEnemies = 0
 local isExploding = false
 local lives = 1
-
 local stepTimer = playdate.frameTimer.new(2)
 stepTimer.repeats = true
+local bunker1 = nil
+local bunker2 = nil
+local bunker3 = nil
+local bunker4 = nil
 
-local playerImage = gfx.image.new('images/player')
 
-local function createExplosion(x, y)
-	isExploding = true
-	local img = gfx.image.new('images/explosion')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	s.frame = 1
-	
-	function s:update()
-		s.frame += 1
-		if s.frame > 1 then
-			isExploding = false
-			s:remove()
-		end
+-- Player
+
+local function createPlayer()
+	if player then
+		player:remove()
 	end
 	
-	s:moveTo(x, y)
-	s:add()
+	player:addSprite()
+	
+	function player:update()		
+		if lives < 1 then
+			player:remove()
+		end
+	end
 end
-
-
-local function destroyEnemy(invader)
-	createExplosion(invader.x, invader.y)
-	invader:remove()
-	remainingEnemies -= 1
-end
-
-local function hitBunkerPart(bunkerPartSprite)
-	bunkerPartSprite:remove()
-end
-
 
 local function playerFire()
 	if isFiring then
@@ -64,90 +54,52 @@ local function playerFire()
 	
 	isFiring = true
 	
-	local img = gfx.image.new('images/bomb-up')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	
-	-- Set collide rect
-	s:setCollideRect(0, 0, s:getSize())
+	-- Define the bomb up
+	local s = BombUp()
 	
 	-- Set bomb initial position to the same position as the player
-	local px, py, pw, ph = playerSprite:getPosition()
+	local px, py, pw, ph = player:getPosition()
 	local bombX = px
 	local bombY = py
 	s:moveTo(bombX, bombY)
-
-	-- Collision response
-	function s:collisionResponse(other)
-		if other.isBunkerPart then
-			return gfx.sprite.kCollisionTypeBounce
-		else
-			return gfx.sprite.kCollisionTypeOverlap
-		end
+	
+	function s:onRemove()
+		isFiring = false
 	end
 	
-	-- Sprite update
-	function s:update()
-		local newY = s.y - 8
+	function s:onHitEnemy(collision)
+		-- Destroy enemy
+		local invader = collision.other
+		Explosion(invader.x, invader.y)
+		invader:remove()
+		remainingEnemies -= 1
 		
-		if newY < -imgHeight then
-			-- Remove the bomb if it moves out of the viewport
-			s:remove()
-			isFiring = false
-		else
-			-- Move the bomb
-			local actualX, actualY, collisions, length = s:moveWithCollisions(s.x, newY)
-			for i = 1, length do
-				local collision = collisions[i]
-				
-				-- If the bomb collides with an enemy, remove the enemy and the bomb
-				if collision.other.isEnemy == true then
-					destroyEnemy(collision.other)
-					s:remove()
-					isFiring = false
-					score += 1
-					enemySpeed += 0.1
-				end
-				
-				-- If the bomb collides with a bunker part, damage the bunker part or remove it
-				if collision.other.isBunkerPart == true then
-					isFiring = false
-					s:remove()
-					hitBunkerPart(collision.other)
-				end
-			end
-		end
+		-- Destroy bomb
+		s:remove()
+		
+		-- Update vars
+		isFiring = false
+		score += 1
+		enemySpeed += 0.1
 	end	
 	
-	-- Add the sprite
-	s:add()
-end
-
-local function bombExplodes(x, y)
-	-- print("bomb explodes")
-	local img = gfx.image.new('images/bomb-down-explodes')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	s.frame = 1
-	s:moveTo(x, y)
-	
-	function s:update()
-		if s.frame > 3 then
-			s:remove()
-		end
-		s.frame += 1
+	function s:onHitBunkerPart(collision)
+		isFiring = false
+		s:remove()
+		local bunkerPart = collision.other
+		bunkerPart:remove()
 	end
 	
 	s:add()
 end
 
+
+-- Enemies 
+
 local function enemyFire(enemySprite)
-	local img = gfx.image.new('images/bomb-down')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	
-	-- Set collide rect
-	s:setCollideRect(0, 0, s:getSize())
+	-- Define bomb down
+	local s = BombDown()
+	local imgWidth, imgHeight = s:getSize()
 	
 	-- Set bomb initial position to the same position as the enemy
 	local px, py, pw, ph = enemySprite:getPosition()
@@ -155,66 +107,32 @@ local function enemyFire(enemySprite)
 	local bombY = py
 	s:moveTo(bombX, bombY)
 	
-	-- Collision response
-	function s:collisionResponse(other)
-		if other.isBunkerPart then
-			return gfx.sprite.kCollisionTypeFreeze
-		else
-			return gfx.sprite.kCollisionTypeOverlap
-		end
+	function s:onHitPlayer()
+		s:remove()
+		lives -= 1
 	end
 	
-	-- Sprite update
-	function s:update()
-		local newY = s.y + 4
-		
-		-- print("newY, -imgHeight", newY, -imgHeight)
-		
-		if newY > playdate.display.getHeight() then
-			-- print("remove")
-			-- Remove the bomb if it moves out of the viewport
-			bombExplodes(s.x, s.y)
-			s:remove()
-			
-		else
-			-- Move the bomb
-			local actualX, actualY, collisions, length = s:moveWithCollisions(s.x, newY)
-			for i = 1, length do
-				local collision = collisions[i]
-				
-				-- If the bomb collides with the player, remove the bomb, reset the player and remove a life
-				if collision.other.isPlayer == true then
-					-- destroyEnemy(collision.other)
-					s:remove()
-					lives -= 1
-				end
-				
-				-- If the bomb collides with a bunker part, damage the bunker part or remove it
-				if collision.other.isBunkerPart == true then
-					s:remove()
-					hitBunkerPart(collision.other)
-				end
-			end
-		end
-	end	
+	function s:onHitBunkerPart(collision)
+		s:remove()
+		local bunkerPart = collision.other
+		bunkerPart:remove()
+	end
 	
-	-- Add the sprite
 	s:add()
 end
 
 local function createEnemy(enemyIndex, x, y)
 	-- print("Create enemy", enemyIndex)
-	local img = gfx.image.new('images/invader')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	s:moveTo(x, y)
-	s:setCollideRect(0, 0, s:getSize())
-	s.frame = 1
+	local s = Enemy(x, y)
+	local imgWidth, imgHeight = s:getSize()	
+	s.frame = 0
 	
 	function s:update()
-		-- if stepTimer.frame ~= 1 then
-		-- 	return
-		-- end
+		Enemy.update(self)
+		
+		if s.frame > 48 then
+			s.frame = 0
+		end
 		
 		if lives < 1 then
 			s:remove()
@@ -222,26 +140,12 @@ local function createEnemy(enemyIndex, x, y)
 			return
 		end
 		
-		s.frame += 1
-		
 		if isExploding then
 			return
 		end
 		
 		if s.frame == math.random(300) then
 			enemyFire(s)
-		end
-		
-		if s.frame < 24 then
-			local newImage = gfx.image.new('images/invader/1')
-			s:setImage(newImage)
-		else
-			local newImage = gfx.image.new('images/invader/2')
-			s:setImage(newImage)
-		end
-		
-		if s.frame > 48 then
-			s.frame = 0
 		end
 		
 		if enemyDirection == 'right' then
@@ -273,6 +177,8 @@ local function createEnemy(enemyIndex, x, y)
 			
 			s:moveTo(s.x, newY)
 		end
+		
+		s.frame += 1
 	end
 	
 	s:add()
@@ -290,67 +196,57 @@ local function createEnemies()
 	end
 end
 
-local function createBunkerPart(x, y)
-	local img = gfx.image.new('images/bunker-1')
-	local imgWidth, imgHeight = img:getSize()
-	local s = gfx.sprite.new(img)
-	s.isBunkerPart = true
-	s:moveTo(x, y)
-	s:setCollideRect(0, 0, s:getSize())
-	function s:update()
-		if lives < 1 then
-			s:remove()
-		end
-	end
-	s:add()
+
+-- Bunkers
+
+local function createBunkers()
+	bunker1 = Bunker(20, 160)
+	bunker2 = Bunker(120, 160)
+	bunker3 = Bunker(220, 160)
+	bunker4 = Bunker(320, 160)
 end
 
-local function createBunker(x, y)
-	for colsIndex=1,15 do
-		for rowsIndex=1,6 do
-			createBunkerPart(4*colsIndex + x, 4*rowsIndex + y)
-		end
+local function removeBunkers()
+	if bunker1 then
+		bunker1:removeBunker()
+		bunker1 = nil
+	end
+	if bunker2 then
+		bunker2:removeBunker()
+		bunker2 = nil
+	end
+	if bunker3 then
+		bunker3:removeBunker()
+		bunker3 = nil
+	end
+	if bunker4 then
+		bunker4:removeBunker()
+		bunker4 = nil
 	end
 end
+
+
+-- Init
 
 local function initialize()
 	print("Let’s get started")
+	
 	score = 0
 	lives = 1
 	
-	-- Player
-	if playerSprite then
-		playerSprite:remove()
-	end
-	
-	playerSprite = gfx.sprite.new(playerImage)
-	playerSprite.isPlayer = true
-	playerSprite:moveTo(200, 224)
-	playerSprite:setCollideRect(0, 0, playerSprite:getSize())	
-	
-	function playerSprite:update()
-		if lives < 1 then
-			playerSprite:remove()
-		end
-	end
-	
-	playerSprite:add()
-	
-	-- Enemies
+	createPlayer()
 	createEnemies()
-	
-	createBunker(20, 160)
-	createBunker(120, 160)
-	createBunker(220, 160)
-	createBunker(320, 160)
+	createBunkers()
 end
 
-initialize()
+
+-- Update
 
 function playdate.update()
-	local px, py, pw, ph = playerSprite:getPosition()
-	local playerImgWidth, playerImgHeight = playerImage:getSize()
+	local px, py, pw, ph = player:getPosition()
+	local playerWidth, playerHeight = player:getSize()
 	
+	-- (A) button
 	if playdate.buttonIsPressed(playdate.kButtonA) then
 		if lives > 0 then
 			playerFire()
@@ -359,18 +255,21 @@ function playdate.update()
 		end
 	end
 	
+	-- Right button
 	if playdate.buttonIsPressed(playdate.kButtonRight) then
-		if px < playdate.display.getWidth() - playerImgWidth / 2 then
-			playerSprite:moveBy(playerSpeed, 0)
+		if px < playdate.display.getWidth() - playerWidth / 2 then
+			player:moveBy(playerSpeed, 0)
 		end
 	end
 	
+	-- Left Button
 	if playdate.buttonIsPressed(playdate.kButtonLeft) then
-		if px > (playerImgWidth / 2) then
-			playerSprite:moveBy(-playerSpeed, 0)
+		if px > (playerWidth / 2) then
+			player:moveBy(-playerSpeed, 0)
 		end
 	end
 
+	-- Change direction
 	if changeDirection then
 		enemyDirection = changeDirection
 		
@@ -381,23 +280,25 @@ function playdate.update()
 		changeDirection = nil
 	end
 	
+	-- Reset the game when there are no more enemies
 	if remainingEnemies == 0 then
 		createEnemies()
 		enemySpeed = 1
 	end
 	
+	-- Remove sprites when there are no more lives
+	if lives < 1 then
+		removeBunkers()
+	end
+	
+	-- Update timers and sprites
 	playdate.frameTimer.updateTimers()
 	gfx.sprite.update()
 	
+	-- Display info
 	gfx.drawText("Score: " .. score, 5, 5)
 	gfx.drawText("Remaining: " .. remainingEnemies, 100, 5)
 	gfx.drawText("Lives: " .. lives, 320, 5)
-	
-	-- gfx.setBackgroundColor(gfx.kColorBlack)
-	-- gfx.setColor(gfx.kColorWhite)
-	-- gfx.setImageDrawMode(gfx.kDrawModeFillWhite)
-	
-	
 	
 	if lives < 1 then
 		gfx.fillRoundRect(100, 50, 200, 100, 5)
@@ -407,3 +308,8 @@ function playdate.update()
 		gfx.setImageDrawMode(gfx.kDrawModeFillBlack)
 	end
 end
+
+
+-- Init the game
+
+initialize()
