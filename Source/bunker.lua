@@ -33,7 +33,6 @@ function Bunker:createBunker(x, y)
 end
 
 function Bunker:remove()
-	print('remove!!')
 	self.removeParts = true
 	Bunker.super.remove(self)
 end
