@@ -34,8 +34,8 @@ local function createPlayer()
 	player:addSprite()
 	
 	function player:update()	
-		print("--update")
 		Player.update(self)
+		
 		if lives < 1 then
 			player:remove()
 		end
@@ -223,10 +223,7 @@ end
 
 -- Update
 
-function playdate.update()
-	local px, py, pw, ph = player:getPosition()
-	local playerWidth, playerHeight = player:getSize()
-	
+function playdate.update()	
 	-- (A) button
 	if playdate.buttonIsPressed(playdate.kButtonA) then
 		if lives > 0 then

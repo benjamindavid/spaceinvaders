@@ -14,9 +14,7 @@ function Player:init()
 end
 
 
-function Player:update()
-	print("-- player update")
-	
+function Player:update()	
 	local px, py, pw, ph = self:getPosition()
 	local playerWidth, playerHeight = self:getSize()
 	
