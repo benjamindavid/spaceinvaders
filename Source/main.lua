@@ -30,7 +30,7 @@ local function createPlayer()
 	end
 	
 	player = Player()
-	player:addSprite()
+	player:add()
 	
 	function player:update()	
 		Player.update(self)
