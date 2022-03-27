@@ -14,7 +14,6 @@ local player = Player()
 local gfx <const> = playdate.graphics
 local score = 0
 local changeDirection = nil
-local playerSpeed = 4
 local enemySpeed = 0.1
 local enemyDirection = 'right'
 local lastEnemyXDirection = 'right'
@@ -91,89 +90,51 @@ end
 
 -- Enemies 
 
-local function enemyFire(enemySprite)
-	-- Define bomb down
-	local s = BombDown()
-	local imgWidth, imgHeight = s:getSize()
-	
-	-- Set bomb initial position to the same position as the enemy
-	local px, py, pw, ph = enemySprite:getPosition()
-	local bombX = px
-	local bombY = py
-	s:moveTo(bombX, bombY)
-	
-	function s:onHitPlayer()
-		s:remove()
-		lives -= 1
-	end
-	
-	function s:onHitBunkerPart(collision)
-		s:remove()
-		local bunkerPart = collision.other
-		bunkerPart:remove()
-	end
-	
-	s:add()
-end
-
 local function createEnemy(enemyIndex, x, y)
 	-- print("Create enemy", enemyIndex)
 	local s = Enemy(x, y)
-	local imgWidth, imgHeight = s:getSize()	
-	s.frame = 0
+	
+	function s:changeDirection(newDirection)
+		print("change direction", newDirection)
+		changeDirection = newDirection
+	end
+	
+	function s:fire()
+		-- Define bomb down
+		local bombSprite = BombDown()
+		local imgWidth, imgHeight = s:getSize()
+		
+		-- Set bomb initial position to the same position as the enemy
+		local px, py, pw, ph = s:getPosition()
+		local bombX = px
+		local bombY = py
+		bombSprite:moveTo(bombX, bombY)
+		
+		function bombSprite:onHitPlayer()
+			bombSprite:remove()
+			lives -= 1
+		end
+		
+		function bombSprite:onHitBunkerPart(collision)
+			bombSprite:remove()
+			local bunkerPart = collision.other
+			bunkerPart:remove()
+		end
+		
+		bombSprite:add()
+	end
 	
 	function s:update()
 		Enemy.update(self)
-		
-		if s.frame > 48 then
-			s.frame = 0
-		end
+		s.enemyDirection = enemyDirection
+		s.lastEnemyXDirection = lastEnemyXDirection
+		s.enemySpeed = enemySpeed
 		
 		if lives < 1 then
 			s:remove()
 			remainingEnemies -= 1
 			return
 		end
-		
-		if isExploding then
-			return
-		end
-		
-		if s.frame == math.random(300) then
-			enemyFire(s)
-		end
-		
-		if enemyDirection == 'right' then
-			local newX = s.x + enemySpeed
-			local maxX = playdate.display.getWidth() - (imgWidth / 2)
-			
-			if newX > maxX then
-				changeDirection = 'down'
-			end
-			
-			s:moveTo(newX, s.y)
-		elseif enemyDirection == 'left' then
-			local newX = s.x - enemySpeed
-			local minX = 0 + (imgWidth / 2)
-			
-			if newX < minX then
-				changeDirection = 'down'
-			end
-			
-			s:moveTo(newX, s.y)
-		elseif enemyDirection == 'down' then
-			local newY = s.y + 5
-			
-			if lastEnemyXDirection == 'right' then
-				changeDirection = 'left'
-			else
-				changeDirection = 'right'
-			end
-			
-			s:moveTo(s.x, newY)
-		end
-		
-		s.frame += 1
 	end
 	
 	s:add()
@@ -256,7 +217,7 @@ function playdate.update()
 	
 	-- Display info
 	gfx.drawText("Score: " .. score, 5, 5)
-	gfx.drawText("Remaining: " .. remainingEnemies, 100, 5)
+	gfx.drawText("Enemies: " .. remainingEnemies, 100, 5)
 	gfx.drawText("Lives: " .. lives, 320, 5)
 	
 	if lives < 1 then
