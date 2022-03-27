@@ -33,7 +33,7 @@ function Player:fire()
 	s:moveTo(bombX, bombY)
 	
 	function s:onRemove()
-		self.isFiring = false
+		selfPlayer.isFiring = false
 	end
 	
 	function s:onHitEnemy(collision)
