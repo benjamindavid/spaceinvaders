@@ -40,7 +40,7 @@ local function createPlayer()
 		end
 	end
 	
-	function player:fire()		
+	function player:fire()
 		if lives < 1 then
 			return
 		end
