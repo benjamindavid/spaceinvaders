@@ -14,6 +14,7 @@ function Bunker:createBunkerPart(x, y)
 	local bunkerSelf = self
 	s:moveTo(x, y)
 	s:setCollideRect(0, 0, s:getSize())
+	
 	function s:update()
 		if bunkerSelf.removeParts then
 			s:remove()
@@ -21,6 +22,7 @@ function Bunker:createBunkerPart(x, y)
 		
 		bunkerSelf:update()
 	end
+	
 	s:add()
 end
 
@@ -36,9 +38,3 @@ function Bunker:remove()
 	self.removeParts = true
 	Bunker.super.remove(self)
 end
-
--- function Bunker:removeBunker()
--- 	print('remove bunker')
--- 	self.removeParts = true
--- 	self:remove()
--- end

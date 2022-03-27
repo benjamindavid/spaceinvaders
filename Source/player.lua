@@ -2,7 +2,6 @@ class('Player').extends(playdate.graphics.sprite)
 
 function Player:init()
 	Player.super.init(self)
-	print("player init")
 	
 	local playerImage = playdate.graphics.image.new('images/player')
 	self:setImage(playerImage)
@@ -18,7 +17,6 @@ function Player:fire()
 	if self.isFiring then
 		return
 	end
-	
 	
 	self.isFiring = true
 	local selfPlayer = self
@@ -57,7 +55,6 @@ function Player:fire()
 		local bunkerPart = collision.other
 		bunkerPart:remove()
 	end
-	
 	
 	function s:update()
 		BombUp.update(self)
