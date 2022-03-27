@@ -11,10 +11,61 @@ function Player:init()
 	
 	self.isPlayer = true
 	self.playerSpeed = 4
+	self.isFiring = false
 end
 
-function Player:fire()
-	self:onFire()
+function Player:fire()	
+	if self.isFiring then
+		return
+	end
+	
+	
+	self.isFiring = true
+	local selfPlayer = self
+	
+	-- Define the bomb up
+	local s = BombUp()
+	
+	-- Set bomb initial position to the same position as the player
+	local px, py, pw, ph = self:getPosition()
+	local bombX = px
+	local bombY = py
+	s:moveTo(bombX, bombY)
+	
+	function s:onRemove()
+		self.isFiring = false
+	end
+	
+	function s:onHitEnemy(collision)
+		-- Destroy enemy
+		local invader = collision.other
+		Explosion(invader.x, invader.y)
+		invader:remove()
+		
+		-- Destroy bomb
+		s:remove()
+		
+		-- Update vars
+		selfPlayer.isFiring = false
+		
+		selfPlayer:onFireHitsEnemy()
+	end	
+	
+	function s:onHitBunkerPart(collision)
+		selfPlayer.isFiring = false
+		s:remove()
+		local bunkerPart = collision.other
+		bunkerPart:remove()
+	end
+	
+	
+	function s:update()
+		BombUp.update(self)
+		
+		selfPlayer:onBombUpdate(s)
+	end
+	
+	s:add()
 end
 
 function Player:update()	

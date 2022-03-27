@@ -17,7 +17,6 @@ local changeDirection = nil
 local enemySpeed = 0.1
 local enemyDirection = 'right'
 local lastEnemyXDirection = 'right'
-local isFiring = false
 local remainingEnemies = 0
 local lives = 1
 
@@ -39,63 +38,24 @@ local function createPlayer()
 		end
 	end
 	
-	function player:onFire()
-		if isFiring then
-			return
-		end
-		
+	function player:fire()		
 		if lives < 1 then
 			return
 		end
 		
-		isFiring = true
-		
-		-- Define the bomb up
-		local s = BombUp()
-		
-		-- Set bomb initial position to the same position as the player
-		local px, py, pw, ph = player:getPosition()
-		local bombX = px
-		local bombY = py
-		s:moveTo(bombX, bombY)
-		
-		function s:onRemove()
-			isFiring = false
-		end
-		
-		function s:onHitEnemy(collision)
-			-- Destroy enemy
-			local invader = collision.other
-			Explosion(invader.x, invader.y)
-			invader:remove()
-			remainingEnemies -= 1
-			
-			-- Destroy bomb
+		Player.fire(self)
+	end
+	
+	function player:onFireHitsEnemy()
+		remainingEnemies -= 1
+		score += 1
+		enemySpeed += 0.1
+	end
+	
+	function player:onBombUpdate(s)
+		if lives < 1 then
 			s:remove()
-			
-			-- Update vars
-			isFiring = false
-			score += 1
-			enemySpeed += 0.1
-		end	
-		
-		function s:onHitBunkerPart(collision)
-			isFiring = false
-			s:remove()
-			local bunkerPart = collision.other
-			bunkerPart:remove()
 		end
-		
-		
-		function s:update()
-			BombUp.update(self)
-		
-			if lives < 1 then
-				s:remove()
-			end
-		end
-		
-		s:add()
 	end
 end
 
