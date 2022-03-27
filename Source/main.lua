@@ -25,10 +25,7 @@ local isExploding = false
 local lives = 1
 local stepTimer = playdate.frameTimer.new(2)
 stepTimer.repeats = true
-local bunker1 = nil
-local bunker2 = nil
-local bunker3 = nil
-local bunker4 = nil
+
 
 -- Player
 
