@@ -33,7 +33,9 @@ local function createPlayer()
 	
 	player:addSprite()
 	
-	function player:update()		
+	function player:update()	
+		print("--update")
+		Player.update(self)
 		if lives < 1 then
 			player:remove()
 		end
@@ -233,20 +235,7 @@ function playdate.update()
 			initialize()
 		end
 	end
-	
-	-- Right button
-	if playdate.buttonIsPressed(playdate.kButtonRight) then
-		if px < playdate.display.getWidth() - playerWidth / 2 then
-			player:moveBy(playerSpeed, 0)
-		end
-	end
-	
-	-- Left Button
-	if playdate.buttonIsPressed(playdate.kButtonLeft) then
-		if px > (playerWidth / 2) then
-			player:moveBy(-playerSpeed, 0)
-		end
-	end
+
 
 	-- Change direction
 	if changeDirection then
