@@ -18,6 +18,8 @@ function Bunker:createBunkerPart(x, y)
 		if bunkerSelf.removeParts then
 			s:remove()
 		end
+		
+		bunkerSelf:update()
 	end
 	s:add()
 end
@@ -30,8 +32,14 @@ function Bunker:createBunker(x, y)
 	end
 end
 
-function Bunker:removeBunker()
-	print('remove bunker')
+function Bunker:remove()
+	print('remove!!')
 	self.removeParts = true
-	self:remove()
+	Bunker.super.remove(self)
 end
+
+-- function Bunker:removeBunker()
+-- 	print('remove bunker')
+-- 	self.removeParts = true
+-- 	self:remove()
+-- end

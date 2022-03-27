@@ -30,7 +30,6 @@ local bunker2 = nil
 local bunker3 = nil
 local bunker4 = nil
 
-
 -- Player
 
 local function createPlayer()
@@ -200,28 +199,14 @@ end
 -- Bunkers
 
 local function createBunkers()
-	bunker1 = Bunker(20, 160)
-	bunker2 = Bunker(120, 160)
-	bunker3 = Bunker(220, 160)
-	bunker4 = Bunker(320, 160)
-end
-
-local function removeBunkers()
-	if bunker1 then
-		bunker1:removeBunker()
-		bunker1 = nil
-	end
-	if bunker2 then
-		bunker2:removeBunker()
-		bunker2 = nil
-	end
-	if bunker3 then
-		bunker3:removeBunker()
-		bunker3 = nil
-	end
-	if bunker4 then
-		bunker4:removeBunker()
-		bunker4 = nil
+	for i=0,3 do
+		local s = Bunker(20 + i * 100, 160)
+		
+		function s:update()
+			if lives < 1 then
+				s:remove()
+			end
+		end
 	end
 end
 
@@ -284,11 +269,6 @@ function playdate.update()
 	if remainingEnemies == 0 then
 		createEnemies()
 		enemySpeed = 1
-	end
-	
-	-- Remove sprites when there are no more lives
-	if lives < 1 then
-		removeBunkers()
 	end
 	
 	-- Update timers and sprites
