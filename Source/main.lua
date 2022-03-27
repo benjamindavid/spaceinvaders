@@ -10,7 +10,7 @@ import 'bombdown'
 import 'bunker'
 import 'explosion'
 
-local player = Player()
+local player = nil
 local gfx <const> = playdate.graphics
 local score = 0
 local changeDirection = nil
@@ -26,8 +26,10 @@ local lives = 1
 local function createPlayer()
 	if player then
 		player:remove()
+		player = nil
 	end
 	
+	player = Player()
 	player:addSprite()
 	
 	function player:update()	
