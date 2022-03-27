@@ -13,10 +13,18 @@ function Player:init()
 	self.playerSpeed = 4
 end
 
+function Player:fire()
+	self:onFire()
+end
 
 function Player:update()	
 	local px, py, pw, ph = self:getPosition()
 	local playerWidth, playerHeight = self:getSize()
+	
+	-- (A) button
+	if playdate.buttonIsPressed(playdate.kButtonA) then
+		self:fire()
+	end
 	
 	-- Right button
 	if playdate.buttonIsPressed(playdate.kButtonRight) then

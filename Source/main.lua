@@ -19,7 +19,6 @@ local enemyDirection = 'right'
 local lastEnemyXDirection = 'right'
 local isFiring = false
 local remainingEnemies = 0
-local isExploding = false
 local lives = 1
 
 
@@ -39,63 +38,74 @@ local function createPlayer()
 			player:remove()
 		end
 	end
-end
-
-local function playerFire()
-	if isFiring then
-		return
-	end
 	
-	isFiring = true
-	
-	-- Define the bomb up
-	local s = BombUp()
-	
-	-- Set bomb initial position to the same position as the player
-	local px, py, pw, ph = player:getPosition()
-	local bombX = px
-	local bombY = py
-	s:moveTo(bombX, bombY)
-	
-	function s:onRemove()
-		isFiring = false
-	end
-	
-	function s:onHitEnemy(collision)
-		-- Destroy enemy
-		local invader = collision.other
-		Explosion(invader.x, invader.y)
-		invader:remove()
-		remainingEnemies -= 1
+	function player:onFire()
+		if isFiring then
+			return
+		end
 		
-		-- Destroy bomb
-		s:remove()
+		if lives < 1 then
+			return
+		end
 		
-		-- Update vars
-		isFiring = false
-		score += 1
-		enemySpeed += 0.1
-	end	
-	
-	function s:onHitBunkerPart(collision)
-		isFiring = false
-		s:remove()
-		local bunkerPart = collision.other
-		bunkerPart:remove()
+		isFiring = true
+		
+		-- Define the bomb up
+		local s = BombUp()
+		
+		-- Set bomb initial position to the same position as the player
+		local px, py, pw, ph = player:getPosition()
+		local bombX = px
+		local bombY = py
+		s:moveTo(bombX, bombY)
+		
+		function s:onRemove()
+			isFiring = false
+		end
+		
+		function s:onHitEnemy(collision)
+			-- Destroy enemy
+			local invader = collision.other
+			Explosion(invader.x, invader.y)
+			invader:remove()
+			remainingEnemies -= 1
+			
+			-- Destroy bomb
+			s:remove()
+			
+			-- Update vars
+			isFiring = false
+			score += 1
+			enemySpeed += 0.1
+		end	
+		
+		function s:onHitBunkerPart(collision)
+			isFiring = false
+			s:remove()
+			local bunkerPart = collision.other
+			bunkerPart:remove()
+		end
+		
+		
+		function s:update()
+			BombUp.update(self)
+		
+			if lives < 1 then
+				s:remove()
+			end
+		end
+		
+		s:add()
 	end
-	
-	s:add()
 end
 
 
 -- Enemies 
 
 local function createEnemy(enemyIndex, x, y)
-	-- print("Create enemy", enemyIndex)
 	local s = Enemy(x, y)
 	
 	function s:changeDirection(newDirection)
-		print("change direction", newDirection)
 		changeDirection = newDirection
 	end
 	
@@ -119,6 +129,14 @@ local function createEnemy(enemyIndex, x, y)
 			bombSprite:remove()
 			local bunkerPart = collision.other
 			bunkerPart:remove()
+		end
+		
+		function bombSprite:update()
+			BombDown.update(self)
+
+			if lives < 1 then
+				bombSprite:remove()
+			end
 		end
 		
 		bombSprite:add()
@@ -187,9 +205,7 @@ end
 function playdate.update()	
 	-- (A) button
 	if playdate.buttonIsPressed(playdate.kButtonA) then
-		if lives > 0 then
-			playerFire()
-		else
+		if lives < 1 then
 			initialize()
 		end
 	end
