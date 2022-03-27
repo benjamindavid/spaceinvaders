@@ -2,7 +2,6 @@ import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
-import 'CoreLibs/frameTimer'
 import 'CoreLibs/easing'
 import 'player'
 import 'enemy'
@@ -23,8 +22,6 @@ local isFiring = false
 local remainingEnemies = 0
 local isExploding = false
 local lives = 1
-local stepTimer = playdate.frameTimer.new(2)
-stepTimer.repeats = true
 
 
 -- Player
@@ -269,7 +266,6 @@ function playdate.update()
 	end
 	
 	-- Update timers and sprites
-	playdate.frameTimer.updateTimers()
 	gfx.sprite.update()
 	
 	-- Display info
