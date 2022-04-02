@@ -46,6 +46,13 @@ function BombUp:update()
 			if collision.other.isBunkerPart == true then
 				self:onHitBunkerPart(collision)
 			end
+			
+			-- If the bomb up collides with the bomb down, remove the two bombs
+			if collision.other.isBombDown then
+				collision.other:remove()
+				self:remove()
+				self:onRemove()
+			end
 		end
 	end
 end	
