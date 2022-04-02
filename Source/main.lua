@@ -14,11 +14,11 @@ local player = nil
 local gfx <const> = playdate.graphics
 local score = 0
 local changeDirection = nil
-local enemySpeed = 0.1
+local enemySpeed = nil
 local enemyDirection = 'right'
 local lastEnemyXDirection = 'right'
 local remainingEnemies = 0
-local lives = 1
+local lives = nil
 
 
 -- Player
@@ -155,6 +155,7 @@ local function initialize()
 	
 	score = 0
 	lives = 1
+	enemySpeed = 0.5
 	
 	createPlayer()
 	createEnemies()

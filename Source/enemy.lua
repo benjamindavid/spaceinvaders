@@ -17,6 +17,23 @@ function Enemy:init(x, y)
 	self.lastEnemyXDirection = nil
 end
 
+-- Collision response
+function Enemy:collisionResponse(other)
+	return playdate.graphics.sprite.kCollisionTypeOverlap
+end
+
+function Enemy:moveEnemyTo(x, y)
+	self:moveWithCollisions(x, y)
+	local actualX, actualY, collisions, length = self:moveWithCollisions(x, y)
+	for i = 1, length do
+		local collision = collisions[i]
+		
+		if collision.other.isBunkerPart == true then
+			collision.other:remove()
+		end
+	end
+end
+
 -- called every frame, handles new input and does simple physics simulation
 function Enemy:update()	
 	-- Animate enemy
@@ -53,7 +70,7 @@ function Enemy:update()
 			self:changeDirection('down')
 		end
 		
-		self:moveTo(newX, self.y)
+		self:moveEnemyTo(newX, self.y)
 	elseif self.enemyDirection == 'left' then
 		local newX = self.x - self.enemySpeed
 		local minX = 0 + (imgWidth / 2)
@@ -62,9 +79,9 @@ function Enemy:update()
 			self:changeDirection('down')
 		end
 		
-		self:moveTo(newX, self.y)
+		self:moveEnemyTo(newX, self.y)
 	elseif self.enemyDirection == 'down' then
-		local newY = self.y + 5
+		local newY = self.y + 2
 		
 		if self.lastEnemyXDirection == 'right' then
 			self:changeDirection('left')
@@ -72,7 +89,7 @@ function Enemy:update()
 			self:changeDirection('right')
 		end
 		
-		self:moveTo(self.x, newY)
+		self:moveEnemyTo(self.x, newY)
 	end
 	
 	self.frame += 1
