@@ -14,7 +14,7 @@ end
 
 -- Collision response
 function BombUp:collisionResponse(other)
-	if other.isBunkerPart then
+	if other.isBunkerPart or other.isEnemy then
 		return playdate.graphics.sprite.kCollisionTypeBounce
 	else
 		return playdate.graphics.sprite.kCollisionTypeOverlap
